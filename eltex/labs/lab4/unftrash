@@ -3,6 +3,7 @@ filename=$1
 homepath="/home/$USER"
 trashpath=$homepath/.trash
 trashlogpath=$homepath/trash.log
+backuppath=$homepath/backup.tar.gz
 amountofstrings=0
 answer="a"
 path="a"
@@ -31,6 +32,8 @@ do
       path=`echo $filenamepath | rev | cut -d/ -f 2- | rev` #убираем из строки название файла, оставляя только путь
       if [ -e $path ]
       then
+	#разархивируем бэкапы
+	`tar -C $homepath -xzf $backuppath`
         #восстанавливаем файл по пути из трэшлога
         #номер строки в трэшлоге - это название файла
         ln $trashpath/$i $filenamepath
@@ -41,15 +44,25 @@ do
         #по правилу n+1 где n- количество файлов в папке 
         `rm $trashpath/$i`
         touch $trashpath/$i
+	#архивируем измененный бэкап
+        `tar -C $homepath -czf $backuppath .trash`
+        `rm -r $trashpath` 
       else
+	`tar -C $homepath -xzf $backuppath`
         echo "путь не найден восстанавливаем в домашний каталог"
         #если каталог не найдет то восстанавливаем файл в домашний каталог
         ln $trashpath/$i $homepath/$filename
         `sed -i $i' s/[/*]/d/g' $trashlogpath`
         `echo " " > $trashpath/$i`
+        `tar -C $homepath -czf $backuppath .trash`
+        `rm -r $trashpath` 
       fi
       #echo $string "файл восстановлен"
     fi
-    answer="a"
+    answer="b"
   fi
 done 
+if [ $answer == "a" ]
+then
+echo "файла нет в бэкапе"
+fi

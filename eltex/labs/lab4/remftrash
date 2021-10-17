@@ -4,12 +4,15 @@ filename=$1
 homepath="/home/$USER"
 trashpath=$homepath/.trash
 trashlogpath=$homepath/trash.log
+backuppath=$homepath/backup.tar.gz
 filepath=`pwd`/$filename
-if ! [ -e $trashpath ]
+if ! [ -e $backuppath ]
 then
-  mkdir $trashpath
+ mkdir $trashpath
+ `tar -C $homepath -czf $backuppath .trash`
+ `rm -r $trashpath`
 fi
-
+`tar -C $homepath -xzf $backuppath`
 linkname=`ls -l $trashpath | wc -l`
 
 if ! [ -e $trashlogpath ]
@@ -19,8 +22,13 @@ fi
 if ! [ -e $filepath ] || [ $# -eq 0 ]
 then
   echo "файл" $filename "не существует"
+  `tar -C $homepath -czf $backuppath .trash`
+  `rm -r $trashpath`
 exit 1
 fi
+
 ln $filename $trashpath/$linkname
 rm $filename
 echo $filepath >> $trashlogpath
+`tar -C $homepath -czf $backuppath .trash`
+`rm -r $trashpath`
