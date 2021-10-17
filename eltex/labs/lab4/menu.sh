@@ -11,14 +11,14 @@ echo "введите 3, чтобы чтобы выйти"
 read answer 
 case $answer in
 1)
-echo "введите имя файла"
-read param
-exec ./remftrash $param  
+  echo "введите имя файла"
+  read param
+  exec ./remftrash $param  
 ;;
 2)
-echo "введите имя файла"
-read param
-exec ./unftrash $param  
+  echo "введите имя файла"
+  read param
+  exec ./unftrash $param  
 ;;
 esac
 done
