@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#скрип подсчитывает сколько и какие файлы можно восстановить
+homepath="/home/$USER"
+trashlogpath=$homepath/trash.log
+counter=0
+
+while read str 
+do
+  #если в строке логфайла слэши заменены на символы, то файл нельзя восстановить
+  if [[ $str =~ "/" ]]
+  then
+    echo "можно восстановить файл " $str
+    let counter++
+  fi
+done < $trashlogpath
+echo "всего можно восстановить " $counter " файла(ов) "
+
