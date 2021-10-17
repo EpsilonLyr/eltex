@@ -6,18 +6,18 @@ trashlogpath=$homepath/trash.log
 filepath=`pwd`/$filename
 if ! [ -e $trashpath ]
 then
-mkdir $trashpath
+  mkdir $trashpath
 fi
 
 linkname=`ls -l $trashpath | wc -l`
 
 if ! [ -e $trashlogpath ]
 then
-touch $trashlogpath
+  touch $trashlogpath
 fi
 if ! [ -e $filepath ] || [ $# -eq 0 ]
 then
-echo "файл" $filename "не существует"
+  echo "файл" $filename "не существует"
 exit 1
 fi
 ln $filename $trashpath/$linkname
