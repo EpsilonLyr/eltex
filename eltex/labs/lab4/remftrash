@@ -1,4 +1,5 @@
 #!/bin/bash
+#этот скрипт делает бэкап файла
 filename=$1
 homepath="/home/$USER"
 trashpath=$homepath/.trash
