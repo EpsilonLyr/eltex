@@ -1,0 +1,56 @@
+#!/bin/bash
+filename=$1
+homepath="/home/$USER"
+trashpath=$homepath/.trash
+trashlogpath=$homepath/trash.log
+amountofstrings=0
+answer="a"
+path="a"
+filenamepath="a"
+
+
+
+if [ $# -eq 0 ]
+then
+echo "не введены параметры"
+exit 1
+fi
+amountofstrings=`cat $trashlogpath | wc -l` #находим количество строк в лог файле
+for ((i=1; i <= amountofstrings; i++))
+do
+filenamepath=`sed $i'q;d' $trashlogpath | egrep "/"$filename$` #считываем i-ую строчку | она должна оканчиваться на название файла
+if ! [ -z $filenamepath ] #если строка не соответствует шаблону записывается пустое значение
+then
+while [[ $answer != "y" ]] && [[ $answer != "n" ]]
+do
+echo "восстановить "$filenamepath"? (y/n)"
+read answer 
+done
+if [ $answer == "y" ]
+then
+path=`echo $filenamepath | rev | cut -d/ -f 2- | rev` #убираем из строки название файла, оставляя только путь
+if [ -e $path ]
+then
+#восстанавливаем файл по пути из трэшлога
+#номер строки в трэшлоге - это название файла
+ln $trashpath/$i $filenamepath
+#так как номер строки соответствует названию файла .trash мы не удаляем строки, а меняем их так, чтобы пользователь их не увидел
+#заменой слэшов на символы
+`sed -i $i' s/[/*]/d/g' $trashlogpath`
+#удаляем файл в .trash, чтобы освободить место, но при этом нам нужно создать пустой файл, так как файлы здесь именуются
+#по правилу n+1 где n- количество файлов в папке 
+`rm $trashpath/$i`
+touch $trashpath/$i
+else
+echo "путь не найден восстанавливаем в домашний каталог"
+#если каталог не найдет то восстанавливаем файл в домашний каталог
+ln $trashpath/$i $homepath/$filename
+`sed -i $i' s/[/*]/d/g' $trashlogpath`
+`echo " " > $trashpath/$i`
+fi
+
+#echo $string "файл восстановлен"
+fi
+answer="a"
+fi
+done 
