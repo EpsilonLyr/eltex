@@ -32,13 +32,7 @@ int workWithPageWriteEdit(int edit, struct page *pages, int size){
 		char *f = asctime(time);
 		puts(f);
 		page -> date = mktime(time);
-		printf("\nff_%ld__ff\n", page -> date);
-		f = ctime(&(page->date));
-		puts(f);
 		free(time);
-		printf("\nff_%ld__ff\n", page -> date);
-		f = ctime(&(page->date));
-		puts(f);
 		int number = 0;
 		char *str;
 		printf("введите  pageNum\n");
