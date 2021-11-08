@@ -16,41 +16,66 @@ struct exam{
 };
 
 int workWithExamWE(int edit, struct exam *exams, int size){
-	struct exam *exam;
-	int number = 0;
-	char *str;
-	int *marks;
-	exam = (struct exam*)calloc(1, sizeof(struct exam));
-	printf("введите  amount\n");
-	scanf("%d", &number);
-	exam -> amount = number;
-	marks = (int*)calloc(ARRSIZE, sizeof(int));
-	for(int i = 0; i < exam -> amount; i++){
-		printf("введите  mark\n");
+	int d = 0;
+	int m = 0;
+	int y = 0; 
+	int h = 0;
+	int min = 0;
+	printf("%d __ Вводите дату в формате dd.MM.yyyy hh:mm\n", y);
+  	if(scanf("%d.%d.%d %d:%d", &d, &m, &y, &h, &min) == 5){
+  		struct tm *time = (struct tm*)calloc(1, sizeof(struct tm));
+  		struct exam *exam = (struct exam*)calloc(1, sizeof(struct exam));
+		printf("Принято\n");
+		time->tm_year = y-1900;
+		time->tm_mon = m-1;
+		time->tm_mday = d;
+		time->tm_min = min;
+		time->tm_hour = h;
+		char *f = asctime(time);
+		puts(f);
+		exam -> date = mktime(time);
+		free(time);
+		int number = 0;
+		char *str;
+		int *marks;
+		printf("введите  amount\n");
 		scanf("%d", &number);
-		*(marks + i) = number;
-	}
-	exam -> marks = marks;
-	printf("введите  examName\n");
-	str = (char*)calloc(ARRSIZE, sizeof(char));
-	fgets(str, ARRSIZE, stdin);
-	fgets(str, ARRSIZE, stdin);
-	change(str);
-	exam -> examName = str;
-	exam -> date = time(NULL);
-	printf("введите  professorName\n");
-	str = (char*)calloc(ARRSIZE, sizeof(char));
-	fgets(str, ARRSIZE, stdin);
-	change(str);
-	exam -> professorName = str;
-	if(edit == WFLAG){
-		*(exams + size) = *exam;
-		size++;
+		exam -> amount = number;
+		marks = (int*)calloc(ARRSIZE, sizeof(int));
+		for(int i = 0; i < exam -> amount; i++){
+			printf("введите  mark\n");
+			scanf("%d", &number);
+			*(marks + i) = number;
+		}
+		exam -> marks = marks;
+		printf("введите  examName\n");
+		str = (char*)calloc(ARRSIZE, sizeof(char));
+		fgets(str, ARRSIZE, stdin);
+		fgets(str, ARRSIZE, stdin);
+		change(str);
+		exam -> examName = str;
+		printf("введите  professorName\n");
+		str = (char*)calloc(ARRSIZE, sizeof(char));
+		fgets(str, ARRSIZE, stdin);
+		change(str);
+		exam -> professorName = str;
+		if(edit == WFLAG){
+			*(exams + size) = *exam;
+			size++;
+		}
+		else{
+			*(exams + edit) = *exam;
+		}
 	}
 	else{
-		*(exams + edit) = *exam;
-	}
+    		printf("неверный формат\n");
+    		exit(-1);
+    	}
 	return size;
+}
+
+int cmpExamDate(const void *x1, const void *x2){
+	return ((*(struct exam *)x1).date - (*(struct exam *)x2).date);
 }
 
 int cmpExamAmount(const void *x1, const void *x2){
@@ -151,8 +176,8 @@ int main(void) {
 			break;
 			case 6:
 				number = 0;
-				while(number != 1 && number != 2){
-					printf("введите 1, чтобы отсортировать по количеству оценок\n2 - по названию экзамена\n");
+				while(number > 3 || number < 1){
+					printf("введите 1, чтобы отсортировать по количеству оценок\n2 - по названию экзамена\n3-по дате\n");
 					scanf("%d", &number);
 					switch(number){
 						case 1:
@@ -160,6 +185,9 @@ int main(void) {
 							break;
 						case 2:
 							qsort(exams, size, sizeof(struct exam), cmpExamName);
+							break;
+						case 3:
+							qsort(exams, size, sizeof(struct exam), cmpExamDate);
 							break;
 					}
 				}

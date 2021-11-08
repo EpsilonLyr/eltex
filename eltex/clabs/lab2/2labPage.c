@@ -14,38 +14,68 @@ struct page{
 };
 
 int workWithPageWriteEdit(int edit, struct page *pages, int size){
-	struct page *page;
-	int number = 0;
-	char *str;
-	page = (struct page*)calloc(1, sizeof(struct page));
-	printf("введите  pageNum\n");
-	scanf("%d", &number);
-	page -> pageNum = number;
-	printf("%d\n", page -> pageNum);
-	printf("введите  stringNum\n");
-	scanf("%d", &number);
-	page -> stringNum = number;
-	printf("%d\n", page -> stringNum);
-	printf("введите  text\n");
-	str = (char*)calloc(ARRSIZE, sizeof(char));
-	fgets(str, ARRSIZE, stdin);
-	fgets(str, ARRSIZE, stdin);
-	change(str);
-	page -> text = str;
-	page -> date = time(NULL);
-	printf("%ld\n", page -> date);
-	if(edit == WFLAG){
-		*(pages + size) = *page;
-		size++;
+	int d = 0;
+	int m = 0;
+	int y = 0; 
+	int h = 0;
+	int min = 0;
+	printf("%d __ Вводите дату в формате dd.MM.yyyy hh:mm\n", y);
+  	if(scanf("%d.%d.%d %d:%d", &d, &m, &y, &h, &min) == 5){
+  		struct page *page = (struct page*)calloc(1, sizeof(struct page));
+  		struct tm *time = (struct tm*)calloc(1, sizeof(struct tm));
+		printf("Принято\n");
+		time->tm_year = y-1900;
+		time->tm_mon = m-1;
+		time->tm_mday = d;
+		time->tm_min = min;
+		time->tm_hour = h;
+		char *f = asctime(time);
+		puts(f);
+		page -> date = mktime(time);
+		printf("\nff_%ld__ff\n", page -> date);
+		f = ctime(&(page->date));
+		puts(f);
+		free(time);
+		printf("\nff_%ld__ff\n", page -> date);
+		f = ctime(&(page->date));
+		puts(f);
+		int number = 0;
+		char *str;
+		printf("введите  pageNum\n");
+		scanf("%d", &number);
+		page -> pageNum = number;
+		printf("%d\n", page -> pageNum);
+		printf("введите  stringNum\n");
+		scanf("%d", &number);
+		page -> stringNum = number;
+		printf("%d\n", page -> stringNum);
+		printf("введите  text\n");
+		str = (char*)calloc(ARRSIZE, sizeof(char));
+		fgets(str, ARRSIZE, stdin);
+		fgets(str, ARRSIZE, stdin);
+		change(str);
+		page -> text = str;
+		if(edit == WFLAG){
+			*(pages + size) = *page;
+			size++;
+		}
+		else{
+			*(pages + edit) = *page;
+		}
 	}
 	else{
-		*(pages + edit) = *page;
-	}
+    		printf("неверный формат\n");
+    		exit(-1);
+    	}
 	return size;
 }
 
 int cmpPageNum(const void *x1, const void *x2){
 	return ((*(struct page *)x1).pageNum - (*(struct page *)x2).pageNum);
+}
+
+int cmpPageDate(const void *x1, const void *x2){
+	return ((*(struct page *)x1).date - (*(struct page *)x2).date);
 }
 
 int cmpPageStringNum(const void *x1, const void *x2){
@@ -127,8 +157,8 @@ int main(void) {
 			break;
 			case 6:
 				number = 0;
-				while(number != 1 && number != 2){
-					printf("введите 1, чтобы отсортировать по номеру\n2 - по количеству строк\n");
+				while(number > 3 || number < 1){
+					printf("введите 1, чтобы отсортировать по номеру\n2 - по количеству строк\n3 - по дате\n");
 					scanf("%d", &number);
 					switch(number){
 						case 1:
@@ -136,6 +166,9 @@ int main(void) {
 							break;
 						case 2:
 							qsort(pages, size, sizeof(struct page), cmpPageStringNum);
+							break;
+						case 3:
+							qsort(pages, size, sizeof(struct page), cmpPageDate);
 							break;
 					}
 				}
