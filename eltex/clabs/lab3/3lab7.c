@@ -70,6 +70,7 @@ void deleteQueue(struct queue *q){
 		free(*(q -> arrays + (i / N ))); 
 	}
 	free(q);
+	q = NULL;
 }
 
 int main(void){
