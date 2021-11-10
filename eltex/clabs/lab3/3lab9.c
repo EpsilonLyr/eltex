@@ -85,4 +85,13 @@ int main(void){
 		}
 		printf("\n");
 	}
+	for(int i = 0; i < size3; i++){
+		j = 0;
+		while(*(*(arr3 + i) + j) != NULL){
+			free (*(*(arr3 + i) + j));
+			j++;
+		}
+		free(*(arr3 + i));
+	}
+	free(arr3);
 }
