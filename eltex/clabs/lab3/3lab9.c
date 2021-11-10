@@ -94,4 +94,7 @@ int main(void){
 		free(*(arr3 + i));
 	}
 	free(arr3);
+	arr1 = NULL;
+	arr2 = NULL;
+	arr3 = NULL;
 }
