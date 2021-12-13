@@ -83,8 +83,6 @@ void *hungerGames(void *arg){
 		printf("%ld unlock mutex\n", pthread_self());
 		pthread_mutex_unlock(&mutex); 
 	}
-	
-	pthread_exit(NULL);
 }
 
 
