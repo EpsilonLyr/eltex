@@ -20,11 +20,14 @@ pthread_mutex_t mutex;
 
 void sig_usr(int signo){
  	printf("%ld received signal of the need to die\n", pthread_self());
+ 	sleep(100);
+ 	printf("%ld exit\n", pthread_self());
 	pthread_exit(NULL);
 }
 
 void *hungerGames(void *arg){
 	int status;
+	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	FILE *fp = (FILE *) arg;
 	pthread_mutex_lock(&mutex);
 	fprintf(fp, "%ld\n", pthread_self());
@@ -76,10 +79,10 @@ void *hungerGames(void *arg){
 		fclose(fp);
 		printf("%ld killed by %ld\n", enemies[target], pthread_self());
 		pthread_kill(enemies[target], SIGUSR1);
+		//pthread_cancel(enemies[target]);
 		printf("%ld unlock mutex\n", pthread_self());
 		pthread_mutex_unlock(&mutex); 
 	}
-	
 	
 	pthread_exit(NULL);
 }
