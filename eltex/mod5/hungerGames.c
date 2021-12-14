@@ -12,106 +12,38 @@
 #include <pthread.h>
 #include <string.h>
 
-long int count; //////////////////////////////////////////////////////////
+#define STACK_MAX_SIZE 100
 
 
+typedef struct Stack_tag {
+    long int data[STACK_MAX_SIZE];
+    size_t size;
+} Stack_t;
+
+
+void killEnemy(int numberOfEnemies, long int *enemies);
+int defineEnemies(long int *enemies);
+int pop(Stack_t *stack, long int *value);
+int push(Stack_t *stack, const long int value);
+void initStack();
+void waitAtBarrier();
+void *hungerGames(void *arg);
+
+Stack_t stack;
 pthread_barrier_t barrier;
 pthread_mutex_t mutex;
-
-void sig_usr(int signo){
- 	printf("%ld received signal of the need to die\n", pthread_self());
- 	sleep(100);
- 	printf("%ld exit\n", pthread_self());
-	pthread_exit(NULL);
-}
-
-void *hungerGames(void *arg){
-	int status;
-	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	FILE *fp = (FILE *) arg;
-	pthread_mutex_lock(&mutex);
-	fprintf(fp, "%ld\n", pthread_self());
-	printf("%ld prepared\n", pthread_self());
-	fflush(fp);
-	pthread_mutex_unlock(&mutex); 	
-	status = pthread_barrier_wait(&barrier);
-	if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
-		pthread_barrier_destroy(&barrier);
-	} else if (status != 0) {
-		perror("barrier_destroy");
-		pthread_exit(NULL);
-	}
-	printf("%ld overcame the barrier\n", pthread_self());
-	int strings;
-	long int enemy;
-	long int enemies[count];
-	int target;
-	while(1){
-		strings = 0;
-		pthread_mutex_lock(&mutex);
-		printf("%ld lock mutex\n", pthread_self());		
-		fseek(fp, 0, SEEK_SET);
-		for(int j = 0; !feof(fp) && !ferror(fp); j++){
-			if(0 < fscanf(fp, "%ld", &enemy)){
-				if(enemy != pthread_self()){
-					enemies[strings] = enemy;
-					strings++;
-				}
-			}
-		}
-		if(strings == 0){
-			pthread_mutex_unlock(&mutex); 
-			pthread_exit(NULL);
-		}
-		target = rand() % strings;
-		fseek(fp, 0, SEEK_SET);
-		if ((fp = fopen("pids.txt", "w+")) == NULL){
-		    	printf("Не удалось открыть файл");
-		    	exit(1);
-		}
-		for(int j = 0; j < strings; j++) {
-			if(j != target){
-				fprintf(fp, "%ld\n", enemies[j]);
-				fflush(fp);
-			}
-		}
-		fprintf(fp, "%ld\n", pthread_self());
-		fclose(fp);
-		printf("%ld killed by %ld\n", enemies[target], pthread_self());
-		pthread_kill(enemies[target], SIGUSR1);
-		//pthread_cancel(enemies[target]);
-		printf("%ld unlock mutex\n", pthread_self());
-		pthread_mutex_unlock(&mutex); 
-	}
-}
-
-
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
 		printf("введите количество дочерних процессов\n");
 		exit(-1);
 	}
+	stack.size = 0;
 	
-	FILE *fp;
-	if ((fp = fopen("pids.txt", "w+")) == NULL){
-	    	printf("Не удалось открыть файл\n");
-	    	exit(1);
-	}
-	
-	count = strtol(argv[1], NULL, 10);
+	long int count = strtol(argv[1], NULL, 10);
 	pthread_t threads[count];
 	
-
-	struct sigaction sa_usr;
-	sa_usr.sa_flags = 0;
-	sa_usr.sa_handler = sig_usr;
-    
-    	sigaction(SIGUSR1, &sa_usr, NULL);
-    	sigaction(SIGUSR2, &sa_usr, NULL);
 	
-	
-	int i = 0;
 	if(0 != pthread_barrier_init(&barrier, NULL, count)){
 		perror("barrier init");
 		exit(-1);
@@ -120,22 +52,112 @@ int main(int argc, char* argv[]){
 		perror("mutex init");
 		exit(-1);
 	}
-	for (i = 0; i < count; i++) {
-    	    if( 0 != pthread_create(&threads[i], NULL, hungerGames, fp)){
+	
+	for (int i = 0; i < count; i++) {
+    	    if( 0 != pthread_create(&threads[i], NULL, hungerGames, &count)){
     	    	perror("create");
     	    	exit(-1);
     	    }
     	}
 
-    	for (i = 0; i < count; i++) {
+    	for (int i = 0; i < count; i++) {
         	pthread_join(threads[i], NULL);
     	}
-    	long int enemy;
-	if(0 < fscanf(fp, "%ld", &enemy)){
-		printf("%ld is survived\n", enemy);	
-	}
-    	fclose(fp);
+    	long int winner = 0;
+    	pop(&stack, &winner);
+    	printf("%ld won\n", winner);
     	pthread_mutex_destroy(&mutex);
     
 	
 }
+
+int push(Stack_t *stack, const long int value) {
+    if (stack->size >= STACK_MAX_SIZE) {
+        return -1;
+    }
+    stack->data[stack->size] = value;
+    stack->size++;
+    return 0;
+}
+
+int pop(Stack_t *stack, long int *value) {
+    if (stack->size == 0) {
+        return -1;
+    }
+    stack->size--;
+    *value = stack->data[stack->size];
+    return 0;
+}
+
+
+int defineEnemies(long int *enemies){
+	long int enemy;
+	int numberOfStrings = 0;
+	while(-1 != pop(&stack, &enemy)){
+		if(enemy != pthread_self()){
+			enemies[numberOfStrings] = enemy;
+			numberOfStrings++;
+		}
+	}
+	return numberOfStrings;
+}
+
+void killEnemy(int numberOfEnemies, long int *enemies){
+	long int target = rand() % numberOfEnemies;
+	for(int j = 0; j < numberOfEnemies; j++) {
+		if(j != target){
+			push(&stack, enemies[j]);
+		}
+	}
+	push(&stack, pthread_self());
+	printf("%ld killed by %ld\n", enemies[target], pthread_self());
+	pthread_cancel(enemies[target]);
+}
+
+void initStack(){
+	pthread_mutex_lock(&mutex);
+	push(&stack, pthread_self());
+	printf("%ld prepared\n", pthread_self());
+	pthread_mutex_unlock(&mutex);
+}
+
+void waitAtBarrier(){
+	int status;
+	status = pthread_barrier_wait(&barrier);
+	if (status == PTHREAD_BARRIER_SERIAL_THREAD) {
+		pthread_barrier_destroy(&barrier);
+	} else if (status != 0) {
+		perror("barrier_destroy");
+		pthread_exit(NULL);
+	}
+}
+
+void *hungerGames(void *arg){
+	long int count = *(long int*) arg;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	
+	initStack();	
+	waitAtBarrier();
+	printf("%ld overcame the barrier\n", pthread_self());
+	
+	int numberOfEnemies;
+	long int enemies[count];
+	while(1){
+		pthread_mutex_lock(&mutex);
+		printf("%ld lock mutex\n", pthread_self());	
+		
+		numberOfEnemies = defineEnemies(enemies);
+		
+		if(numberOfEnemies == 0){
+			push(&stack, pthread_self());
+			printf("%ld unlock mutex\n", pthread_self());
+			pthread_mutex_unlock(&mutex); 
+			pthread_exit(NULL);
+		}
+		
+		killEnemy(numberOfEnemies, enemies);
+		printf("%ld unlock mutex\n", pthread_self());
+		pthread_mutex_unlock(&mutex); 
+	}
+}
+
