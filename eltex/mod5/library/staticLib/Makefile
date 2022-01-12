@@ -8,4 +8,4 @@ f1.o: f1.c
 f2.o: f2.c
 	cc -c f2.c
 clean:
-	rm f1.o f2.o libstatic.a result
+	rm -f f1.o f2.o libstatic.a result
